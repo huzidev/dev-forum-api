@@ -1,25 +1,28 @@
 const express = require('express');
 const cors = require('cors');
+const serverless = require('serverless-http');
+
 const app = express();
 
-// Import all routers
-const userRouter = require('./routes/user.router');
-const authRouter = require('./routes/auth.router');
-const bugRouter = require('./routes/bug.router');
-const friendRouter = require('./routes/friend.router');
-const notificationRouter = require('./routes/notification.router');
-const planRouter = require('./routes/plan.router');
-const pointsRouter = require('./routes/points.router');
-const postRouter = require('./routes/post.router');
-const questionRouter = require('./routes/question.router');
+// Import all routers (adjusted paths for api/ folder)
+const userRouter = require('../routes/user.router');
+const authRouter = require('../routes/auth.router');
+const bugRouter = require('../routes/bug.router');
+const friendRouter = require('../routes/friend.router');
+const notificationRouter = require('../routes/notification.router');
+const planRouter = require('../routes/plan.router');
+const pointsRouter = require('../routes/points.router');
+const postRouter = require('../routes/post.router');
+const questionRouter = require('../routes/question.router');
 
+// CORS middleware
 app.use(
     cors({
         origin: [
             "http://localhost:3000",
             "http://localhost:3001",
             "https://dev-forum-admin.vercel.app",
-            "https://dev-forum-main.vercel.app",
+            "https://dev-forum-main.vercel.app"
         ],
         credentials: true,
     })
@@ -45,17 +48,16 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'Forum API is running' });
 });
 
-const port = process.env.PORT || 4000;
-app.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
-    console.log(`API available at http://localhost:${port}/api`);
-});
-
+// 404 handler
 app.use((req, res) => {
     res.status(404).json({ error: 'Endpoint not found' });
 });
 
+// Error handler
 app.use((err, req, res, next) => {
     console.error(err);
     res.status(500).json({ error: 'Internal Server Error' });
 });
+
+// Export as serverless function
+module.exports = serverless(app);
