@@ -18,8 +18,8 @@ app.use(
         origin: [
             "http://localhost:3000",
             "http://localhost:3001",
-            "https://dev-forum-admin-c1ef577947a8.herokuapp.com",
-            "https://dev-forum-main-9a195a790233.herokuapp.com",
+            "https://dev-forum-admin.vercel.app",
+            "https://dev-forum-main.vercel.app",
         ],
         credentials: true,
     })
