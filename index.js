@@ -4,16 +4,37 @@ const serverless = require('serverless-http');
 
 const app = express();
 
+// Add request logging for debugging
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
+
 // Import all routers (adjusted paths for api/ folder)
-const userRouter = require('./routes/user.router');
-const authRouter = require('./routes/auth.router');
-const bugRouter = require('./routes/bug.router');
-const friendRouter = require('./routes/friend.router');
-const notificationRouter = require('./routes/notification.router');
-const planRouter = require('./routes/plan.router');
-const pointsRouter = require('./routes/points.router');
-const postRouter = require('./routes/post.router');
-const questionRouter = require('./routes/question.router');
+let userRouter, authRouter, bugRouter, friendRouter, notificationRouter, planRouter, pointsRouter, postRouter, questionRouter;
+
+try {
+    userRouter = require('./routes/user.router');
+    authRouter = require('./routes/auth.router');
+    bugRouter = require('./routes/bug.router');
+    friendRouter = require('./routes/friend.router');
+    notificationRouter = require('./routes/notification.router');
+    planRouter = require('./routes/plan.router');
+    pointsRouter = require('./routes/points.router');
+    postRouter = require('./routes/post.router');
+    questionRouter = require('./routes/question.router');
+} catch (error) {
+    console.error('Error importing routers:', error);
+    // Create fallback routers if imports fail
+    const express = require('express');
+    const fallbackRouter = express.Router();
+    fallbackRouter.use((req, res) => {
+        res.status(503).json({ error: 'Service temporarily unavailable' });
+    });
+    
+    userRouter = authRouter = bugRouter = friendRouter = notificationRouter = 
+    planRouter = pointsRouter = postRouter = questionRouter = fallbackRouter;
+}
 
 // CORS middleware
 app.use(
@@ -55,9 +76,36 @@ app.use((req, res) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-    console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Error details:', {
+        message: err.message,
+        stack: err.stack,
+        url: req.url,
+        method: req.method,
+        headers: req.headers,
+        body: req.body
+    });
+    res.status(500).json({ 
+        error: 'Internal Server Error',
+        ...(process.env.NODE_ENV === 'development' && { details: err.message })
+    });
+});
+
+// Wrap the app for serverless with error handling
+const handler = serverless(app, {
+    request: (request, event, context) => {
+        console.log('Serverless request:', { 
+            url: request.url, 
+            method: request.method,
+            headers: request.headers 
+        });
+    },
+    response: (response, event, context) => {
+        console.log('Serverless response:', { 
+            statusCode: response.statusCode 
+        });
+    }
 });
 
 // Export as serverless function
-module.exports = serverless(app);
+module.exports = handler;
+module.exports.handler = handler;
