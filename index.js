@@ -7,6 +7,8 @@ const app = express();
 // Add request logging for debugging
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    console.log('Headers:', req.headers);
+    console.log('Query:', req.query);
     next();
 });
 
@@ -66,7 +68,24 @@ app.use('/api/questions', questionRouter);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', message: 'Forum API is running' });
+    console.log('Health check endpoint hit');
+    try {
+        res.status(200).json({ 
+            status: 'OK', 
+            message: 'Forum API is running',
+            timestamp: new Date().toISOString(),
+            environment: process.env.NODE_ENV || 'unknown'
+        });
+    } catch (error) {
+        console.error('Error in health check:', error);
+        res.status(500).json({ error: 'Health check failed' });
+    }
+});
+
+// Simple test endpoint
+app.get('/api/test', (req, res) => {
+    console.log('Test endpoint hit');
+    res.status(200).send('Test endpoint working');
 });
 
 // Root endpoint for debugging
@@ -91,7 +110,25 @@ app.get('/', (req, res) => {
 
 // 404 handler
 app.use((req, res) => {
-    res.status(404).json({ error: 'Endpoint not found' });
+    console.log(`404 - Route not found: ${req.method} ${req.url}`);
+    res.status(404).json({ 
+        error: 'Endpoint not found',
+        method: req.method,
+        url: req.url,
+        availableRoutes: [
+            'GET /',
+            'GET /api/health',
+            'POST /api/auth/*',
+            'GET /api/users/*',
+            'GET /api/bugs/*',
+            'GET /api/friends/*',
+            'GET /api/notifications/*',
+            'GET /api/plans/*',
+            'GET /api/points/*',
+            'GET /api/posts/*',
+            'GET /api/questions/*'
+        ]
+    });
 });
 
 // Error handler
@@ -111,7 +148,12 @@ app.use((err, req, res, next) => {
 });
 
 // Wrap the app for serverless
-const handler = serverless(app);
+const handler = serverless(app, {
+    binary: false
+});
 
 // Export as serverless function
 module.exports = handler;
+
+// Also export the app for local testing
+module.exports.app = app;
