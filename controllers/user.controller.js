@@ -2,7 +2,7 @@ const prisma = require("../utils/prisma");
 
 async function createUser(value) {
   try {
-    const { userId, email, firstName, lastName, username, role } = value;
+    const { userId, email, firstName, lastName, username } = value;
     const user = await prisma.user.create({
       data: {
         userId,
@@ -10,7 +10,6 @@ async function createUser(value) {
         firstName: firstName || "",
         lastName: lastName || "",
         username,
-        role
       },
     });
     return user;
@@ -103,19 +102,17 @@ async function getUserById(id) {
   }
 }
 
-async function createUserIfNotExists(value, role) {
+async function createUserIfNotExists(value) {
   try {
     const { userId } = value;
     const userExists = await getUserByClerkId(userId);
-
     console.log("SW what is values", value);
-    console.log('SW role', role);
 
     if (userExists) {
       return { user: userExists, created: false };
     }
 
-    const user = await createUser({...value, role});
+    const user = await createUser(value);
     return user ? { user, created: true } : null;
   } catch (e) {
     console.log("Error :", e.stack);

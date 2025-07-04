@@ -4,7 +4,7 @@ const router = express.Router();
 
 router.post("/create-user", async (req, res) => {
   try {
-    const response = await userController.createUser(req.body);
+    const response = await userController.createUserIfNotExists(req.body);
 
     if (response) {
       return res.status(200).json({
