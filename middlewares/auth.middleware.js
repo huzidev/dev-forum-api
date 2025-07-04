@@ -5,11 +5,11 @@ const prisma = new PrismaClient();
 
 // Map frontends to their respective Clerk credentials
 const clerkEnvs = {
-  "dev-forum-admin-c1ef577947a8.herokuapp.com": {
+  "dev-forum-admin.vercel.app": {
     secretKey: process.env.ADMIN_CLERK_SECRET_KEY,
     publishableKey: process.env.ADMIN_CLERK_PUBLISHABLE_KEY,
   },
-  "dev-forum-main-9a195a790233.herokuapp.com": {
+  "dev-forum-main.vercel.app": {
     secretKey: process.env.USER_CLERK_SECRET_KEY,
     publishableKey: process.env.USER_CLERK_PUBLISHABLE_KEY,
   },
