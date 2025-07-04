@@ -69,6 +69,26 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'Forum API is running' });
 });
 
+// Root endpoint for debugging
+app.get('/', (req, res) => {
+    res.json({ 
+        status: 'OK', 
+        message: 'Forum API Root - Use /api/health for health check',
+        availableRoutes: [
+            '/api/health',
+            '/api/users',
+            '/api/auth',
+            '/api/bugs',
+            '/api/friends',
+            '/api/notifications',
+            '/api/plans',
+            '/api/points',
+            '/api/posts',
+            '/api/questions'
+        ]
+    });
+});
+
 // 404 handler
 app.use((req, res) => {
     res.status(404).json({ error: 'Endpoint not found' });
@@ -90,21 +110,8 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Wrap the app for serverless with error handling
-const handler = serverless(app, {
-    request: (request, event, context) => {
-        console.log('Serverless request:', { 
-            url: request.url, 
-            method: request.method,
-            headers: request.headers 
-        });
-    },
-    response: (response, event, context) => {
-        console.log('Serverless response:', { 
-            statusCode: response.statusCode 
-        });
-    }
-});
+// Wrap the app for serverless
+const handler = serverless(app);
 
+// Export as serverless function
 module.exports = handler;
-module.exports.handler = handler;
