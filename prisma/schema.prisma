@@ -1,0 +1,258 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id          String       @id @default(cuid())
+  content     String?
+  createdAt   DateTime     @default(now())
+  authorId    Int
+  type        String       @default("TEXT")
+  comment     String?
+  status      PostStatus   @default(CREATED)
+  comments    Comment[]
+  likes       Like[]
+  pollOptions PollOption[]
+  pollVotes   PollVote[]
+  author      User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  postImages  PostImage[]
+}
+
+model Image {
+  id       String      @id @default(cuid())
+  imageUrl String
+  posts    PostImage[]
+}
+
+model PostImage {
+  id      String @id @default(cuid())
+  postId  String
+  imageId String
+  image   Image  @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  post    Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, imageId])
+}
+
+model Comment {
+  id             String        @id @default(cuid())
+  content        String
+  createdAt      DateTime      @default(now())
+  userId         Int
+  postId         String
+  reason         String?
+  status         CommentStatus @default(CREATED)
+  notificationId String?       @unique
+  notification   Notification? @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  post           Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id])
+
+  @@index([postId])
+  @@index([userId])
+}
+
+model Like {
+  id             String        @id @default(cuid())
+  userId         Int
+  postId         String
+  createdAt      DateTime      @default(now())
+  notificationId String?       @unique
+  notification   Notification? @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  post           Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id])
+
+  @@unique([userId, postId])
+}
+
+model PollOption {
+  id        String     @id @default(cuid())
+  text      String
+  postId    String
+  post      Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  pollVotes PollVote[]
+}
+
+model PollVote {
+  id           String     @id @default(cuid())
+  userId       Int
+  postId       String
+  pollOptionId String
+  createdAt    DateTime   @default(now())
+  pollOption   PollOption @relation(fields: [pollOptionId], references: [id], onDelete: Cascade)
+  post         Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id])
+
+  @@unique([userId, postId])
+}
+
+model User {
+  id               Int             @id @default(autoincrement())
+  userId           String          @unique
+  email            String          @unique
+  firstName        String?
+  lastName         String?
+  profilePicture   String?         @default("")
+  username         String          @unique
+  createdAt        DateTime        @default(now())
+  isBan            Boolean         @default(false)
+  isEnrolled       Boolean         @default(false)
+  role             Role            @default(USER) // 👈 new field
+
+  // Only meaningful for users — admins will just have empty arrays/nulls
+  PlanId           String?
+  Plan             Plan?           @relation(fields: [PlanId], references: [id])
+  bugs             BugReport[]
+  comments         Comment[]
+  receivedRequests FriendRequest[] @relation("receivedRequests")
+  sentRequests     FriendRequest[] @relation("sentRequests")
+  friendsOf        Friendship[]    @relation("friendFriendships")
+  friends          Friendship[]    @relation("userFriendships")
+  likes            Like[]
+  notifications    Notification[]
+  pointHistory     PointHistory[]
+  pollVotes        PollVote[]
+  posts            Post[]
+  questions        Question[]
+  threads          Thread[]
+}
+
+model PointHistory {
+  id          Int      @id @default(autoincrement())
+  points      Int
+  type        String
+  description String?
+  createdAt   DateTime @default(now())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FriendRequest {
+  id             Int           @id @default(autoincrement())
+  senderId       Int
+  receiverId     Int
+  status         String        @default("PENDING")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  notificationId String?       @unique
+  notification   Notification? @relation(fields: [notificationId], references: [id])
+  receiver       User          @relation("receivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender         User          @relation("sentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id            String         @id @default(cuid())
+  userId        Int
+  type          String
+  content       String
+  url           String?
+  isRead        Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  comment       Comment?
+  friendRequest FriendRequest?
+  like          Like?
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Friendship {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  friendId  Int
+  createdAt DateTime @default(now())
+  friend    User     @relation("friendFriendships", fields: [friendId], references: [id], onDelete: Cascade)
+  user      User     @relation("userFriendships", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@index([userId])
+  @@index([friendId])
+}
+
+model Thread {
+  id         String   @id @default(cuid())
+  content    String
+  createdAt  DateTime @default(now())
+  status     String   @default("CREATED")
+  questionId String
+  userId     Int
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([id])
+  @@index([userId])
+  @@index([questionId])
+}
+
+model Question {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  status    String   @default("CREATED")
+  createdAt DateTime @default(now())
+  userId    Int
+  comment   String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  threads   Thread[]
+
+  @@index([userId])
+}
+
+model BugReport {
+  id        String          @id @default(cuid())
+  title     String
+  content   String
+  status    String   @default("CREATED")
+  comment   String?
+  createdAt DateTime        @default(now())
+  userId    Int
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Plan {
+  id        String    @id @default(cuid())
+  title     String
+  info      String
+  price     Float
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  benefits  Benefit[]
+  users     User[]
+}
+
+model Benefit {
+  id          String @id @default(cuid())
+  description String
+  PlanId      String
+  Plan        Plan   @relation(fields: [PlanId], references: [id], onDelete: Cascade)
+}
+
+enum BugReportStatus {
+  CREATED
+  IN_PROGRESS
+  NEED_MORE_INFO
+  NOT_A_BUG
+  RESOLVED
+  CLOSED
+}
+
+enum PostStatus {
+  CREATED
+  IN_REVIEW
+  DELETED
+}
+
+enum CommentStatus {
+  CREATED
+  IN_REVIEW
+  DELETED
+}
+
+enum Role {
+  USER
+  ADMIN
+}
