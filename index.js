@@ -5,15 +5,15 @@ const serverless = require('serverless-http');
 const app = express();
 
 // Import all routers (adjusted paths for api/ folder)
-const userRouter = require('../routes/user.router');
-const authRouter = require('../routes/auth.router');
-const bugRouter = require('../routes/bug.router');
-const friendRouter = require('../routes/friend.router');
-const notificationRouter = require('../routes/notification.router');
-const planRouter = require('../routes/plan.router');
-const pointsRouter = require('../routes/points.router');
-const postRouter = require('../routes/post.router');
-const questionRouter = require('../routes/question.router');
+const userRouter = require('./routes/user.router');
+const authRouter = require('./routes/auth.router');
+const bugRouter = require('./routes/bug.router');
+const friendRouter = require('./routes/friend.router');
+const notificationRouter = require('./routes/notification.router');
+const planRouter = require('./routes/plan.router');
+const pointsRouter = require('./routes/points.router');
+const postRouter = require('./routes/post.router');
+const questionRouter = require('./routes/question.router');
 
 // CORS middleware
 app.use(
