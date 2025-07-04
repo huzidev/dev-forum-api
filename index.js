@@ -42,7 +42,7 @@ app.use('/api/questions', questionRouter);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Forum API is running' });
+    res.json({ status: 'OK', message: 'Forum API is running' });
 });
 
 const port = process.env.PORT || 4000;
