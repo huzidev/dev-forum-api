@@ -106,6 +106,5 @@ const handler = serverless(app, {
     }
 });
 
-// Export as serverless function
 module.exports = handler;
 module.exports.handler = handler;
